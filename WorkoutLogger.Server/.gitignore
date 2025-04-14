@@ -1,0 +1,3 @@
+appsettings*.json  # Optional: If you accidentally add keys there
+*.env              # If you use a .env file
+*.db			   # If you use a SQLite database
