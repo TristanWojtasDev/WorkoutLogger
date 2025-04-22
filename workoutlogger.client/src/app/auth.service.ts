@@ -29,4 +29,8 @@ export class AuthService {
     isLoggedIn(): boolean {
         return !!localStorage.getItem('token');
     }
+
+    testProtected() {
+      return this.http.get('https://localhost:7090/api/workouts'); // Hardcoded for now
+    }
 }
