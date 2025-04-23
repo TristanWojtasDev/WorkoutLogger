@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using WorkoutLogger.Server.Data;
 using Microsoft.AspNetCore.SpaServices;
+using System.Text.Json.Serialization;
 
 namespace WorkoutLogger.Server
 {
@@ -25,6 +26,13 @@ namespace WorkoutLogger.Server
                           .AllowAnyHeader();
                 });
             });
+
+            // Add services to the container.
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

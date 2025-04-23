@@ -28,29 +28,73 @@ namespace WorkoutLogger.Server.Controllers
         }
 
         /// <summary>
-        /// Fetches workouts for the logged-in user.
+        /// Fetches all records (Workouts, Cardio, Weigh-Ins) for the logged-in user.
         /// </summary>
-        /// <returns>A list of workouts for the current user.</returns>
+        /// <returns>A list of records, ordered by Date and Type (WeighIn, Cardio, Workout).</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Workout>>> GetWorkouts()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return await _context.Workouts
                 .Where(w => w.UserId == userId)
+                .OrderBy(w => w.Date)
+                .ThenBy(w => w.Type) // WeighIn (0), Cardio (1), Workout (2)
                 .ToListAsync();
         }
 
         /// <summary>
-        /// Creates a new workout for the logged-in user.
+        /// Creates a new record (Workout, Cardio, or Weigh-In) for the logged-in user.
         /// </summary>
-        /// <param name="workout">The workout data to create.</param>
-        /// <returns>The created workout with its ID.</returns>
+        /// <param name="workout">The record data to create.</param>
+        /// <returns>The created record with its ID.</returns>
         [HttpPost]
         public async Task<ActionResult<Workout>> CreateWorkout([FromBody] Workout workout)
         {
+            if (workout == null)
+            {
+                return BadRequest("Request body is empty or invalid.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            // Validate fields based on Type
+            if (workout.Type == WorkoutType.Workout)
+            {
+                if (string.IsNullOrEmpty(workout.Exercise) || workout.Sets == null || workout.Sets <= 0 || workout.Reps == null || workout.Reps <= 0 || workout.Weight == null)
+                {
+                    return BadRequest("Workout requires Exercise, Sets (>0), Reps (>0), and Weight.");
+                }
+                workout.Miles = null;
+                workout.Time = null;
+            }
+            else if (workout.Type == WorkoutType.Cardio)
+            {
+                if (string.IsNullOrEmpty(workout.Exercise) || workout.Miles == null || workout.Miles <= 0 || workout.Time == null)
+                {
+                    return BadRequest("Cardio requires Exercise, Miles (>0), and Time.");
+                }
+                workout.Sets = null;
+                workout.Reps = null;
+                workout.Weight = null;
+            }
+            else if (workout.Type == WorkoutType.WeighIn)
+            {
+                if (workout.Weight == null || workout.Weight <= 0)
+                {
+                    return BadRequest("Weigh-In requires Weight (>0).");
+                }
+                workout.Exercise = null;
+                workout.Sets = null;
+                workout.Reps = null;
+                workout.Miles = null;
+                workout.Time = null;
+            }
+            else
+            {
+                return BadRequest("Invalid Type value.");
             }
 
             workout.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -61,17 +105,17 @@ namespace WorkoutLogger.Server.Controllers
         }
 
         /// <summary>
-        /// Updates an existing workout for the logged-in user.
+        /// Updates an existing record for the logged-in user.
         /// </summary>
-        /// <param name="id">The ID of the workout to update.</param>
-        /// <param name="updatedWorkout">The updated workout data.</param>
+        /// <param name="id">The ID of the record to update.</param>
+        /// <param name="updatedWorkout">The updated record data.</param>
         /// <returns>No content if successful; otherwise, an error response.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateWorkout(int id, Workout updatedWorkout)
         {
             if (id != updatedWorkout.Id)
             {
-                return BadRequest("Workout ID mismatch.");
+                return BadRequest("Record ID mismatch.");
             }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -79,18 +123,54 @@ namespace WorkoutLogger.Server.Controllers
 
             if (workout == null)
             {
-                return NotFound("Workout not found.");
+                return NotFound("Record not found.");
             }
 
             if (workout.UserId != userId)
             {
-                return Forbid("You can only update your own workouts.");
+                return Forbid("You can only update your own records.");
             }
 
+            // Validate fields based on Type
+            if (updatedWorkout.Type == WorkoutType.Workout)
+            {
+                if (string.IsNullOrEmpty(updatedWorkout.Exercise) || updatedWorkout.Sets == null || updatedWorkout.Sets <= 0 || updatedWorkout.Reps == null || updatedWorkout.Reps <= 0 || updatedWorkout.Weight == null)
+                {
+                    return BadRequest("Workout requires Exercise, Sets (>0), Reps (>0), and Weight.");
+                }
+                updatedWorkout.Miles = null;
+                updatedWorkout.Time = null;
+            }
+            else if (updatedWorkout.Type == WorkoutType.Cardio)
+            {
+                if (string.IsNullOrEmpty(updatedWorkout.Exercise) || updatedWorkout.Miles == null || updatedWorkout.Miles <= 0 || updatedWorkout.Time == null)
+                {
+                    return BadRequest("Cardio requires Exercise, Miles (>0), and Time.");
+                }
+                updatedWorkout.Sets = null;
+                updatedWorkout.Reps = null;
+                updatedWorkout.Weight = null;
+            }
+            else if (updatedWorkout.Type == WorkoutType.WeighIn)
+            {
+                if (updatedWorkout.Weight == null || updatedWorkout.Weight <= 0)
+                {
+                    return BadRequest("Weigh-In requires Weight (>0).");
+                }
+                updatedWorkout.Exercise = null;
+                updatedWorkout.Sets = null;
+                updatedWorkout.Reps = null;
+                updatedWorkout.Miles = null;
+                updatedWorkout.Time = null;
+            }
+
+            workout.Type = updatedWorkout.Type;
             workout.Exercise = updatedWorkout.Exercise;
             workout.Sets = updatedWorkout.Sets;
             workout.Reps = updatedWorkout.Reps;
             workout.Weight = updatedWorkout.Weight;
+            workout.Miles = updatedWorkout.Miles;
+            workout.Time = updatedWorkout.Time;
             workout.Date = updatedWorkout.Date;
 
             try
@@ -101,13 +181,14 @@ namespace WorkoutLogger.Server.Controllers
             {
                 if (!WorkoutExists(id))
                 {
-                    return NotFound("Workout not found.");
+                    return NotFound("Record not found.");
                 }
                 throw;
             }
 
             return NoContent();
         }
+
 
         /// <summary>
         /// Deletes a workout for the logged-in user.

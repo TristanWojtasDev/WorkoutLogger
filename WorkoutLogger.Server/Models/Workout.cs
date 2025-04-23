@@ -10,19 +10,21 @@ namespace WorkoutLogger.Server.Models
 
         public DateTime Date { get; set; }
 
-        [Required(ErrorMessage = "Exercise is required.")]
-        public string Exercise { get; set; }
+        [Required(ErrorMessage = "Type is required.")]
+        public WorkoutType Type { get; set; }
 
-        [Required(ErrorMessage = "Sets is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Sets must be at least 1.")]
-        public int Sets { get; set; }
+        // Common fields (used by all types)
+        public string? Exercise { get; set; } // Used by Workout and Cardio
 
-        [Required(ErrorMessage = "Reps is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Reps must be at least 1.")]
-        public int Reps { get; set; }
+        // Workout-specific fields
+        public int? Sets { get; set; }
+        public int? Reps { get; set; }
 
-        [Required(ErrorMessage = "Weight is required.")]
-        [Range(0, int.MaxValue, ErrorMessage = "Weight must be at least 0.")]
-        public int Weight { get; set; }
+        // Cardio-specific fields
+        public double? Miles { get; set; } // Used by Cardio
+        public TimeSpan? Time { get; set; } // Used by Cardio
+
+        // WeighIn-specific fields
+        public double? Weight { get; set; } // Used by Workout and WeighIn
     }
 }

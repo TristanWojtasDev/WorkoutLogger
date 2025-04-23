@@ -7,7 +7,7 @@
  */
 import { Component } from '@angular/core'; //Decorator from Angular to define a component
 import { AuthService } from '../auth.service'; // Service for authentication and workout API calls
-import { Workout } from '../workout'; // Interface for workout data structure
+import { Workout, WorkoutType } from '../workout'; // Interface for workout data structure
 import { FormsModule } from '@angular/forms'; // Provides ngModel for two-way data binding in forms (used for login and workout creation forms)
 import { CommonModule } from '@angular/common'; // Provides common Angular directives like *ngIf, *ngFor, and pipes like date
 
@@ -26,49 +26,94 @@ import { CommonModule } from '@angular/common'; // Provides common Angular direc
           <button type="submit">Login</button>
         </form>
       </div>
-      <p>{{ message }}</p>
+      <div class="form-container">
+        <p>{{ message }}</p>
+      </div>
     </div>
 
     <div *ngIf="isLoggedIn">
       <h2>Workout Logger</h2>
       <button (click)="logout()">Logout</button>
 
+      <!-- Create Workout Form -->
       <div class="form-container">
         <h3>Create Workout</h3>
         <form (ngSubmit)="createWorkout()">
           <input [(ngModel)]="newWorkout.exercise" name="exercise" placeholder="Exercise" required />
           <input [(ngModel)]="newWorkout.sets" name="sets" type="number" placeholder="Sets" required />
           <input [(ngModel)]="newWorkout.reps" name="reps" type="number" placeholder="Reps" required />
-          <input [(ngModel)]="newWorkout.weight" name="weight" type="number" placeholder="Weight (lbs)" required />
+          <input [(ngModel)]="newWorkout.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
           <button type="submit">Add Workout</button>
         </form>
       </div>
 
-      <div *ngIf="editingWorkout" class="form-container">
-        <h3>Edit Workout</h3>
-        <form (ngSubmit)="updateWorkout()">
-          <input [(ngModel)]="editingWorkout.exercise" name="exercise" placeholder="Exercise" required />
-          <input [(ngModel)]="editingWorkout.sets" name="sets" type="number" placeholder="Sets" required />
-          <input [(ngModel)]="editingWorkout.reps" name="reps" type="number" placeholder="Reps" required />
-          <input [(ngModel)]="editingWorkout.weight" name="weight" type="number" placeholder="Weight (lbs)" required />
+      <!-- Create Cardio Form -->
+      <div class="form-container">
+        <h3>Add Cardio</h3>
+        <form (ngSubmit)="createCardio()">
+          <input [(ngModel)]="newCardio.exercise" name="exercise" placeholder="Exercise" required />
+          <input [(ngModel)]="newCardio.miles" name="miles" type="number" step="0.01" placeholder="Miles" required />
+          <input [(ngModel)]="newCardio.time" name="time" type="text" placeholder="Time (HH:mm:ss)" required />
+          <button type="submit">Add Cardio</button>
+        </form>
+      </div>
+
+      <!-- Create Weigh-In Form -->
+      <div class="form-container">
+        <h3>Add Weigh-In</h3>
+        <form (ngSubmit)="createWeighIn()">
+          <input [(ngModel)]="newWeighIn.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
+          <button type="submit">Add Weigh-In</button>
+        </form>
+      </div>
+
+      <!-- Edit Form -->
+      <div *ngIf="editingRecord" class="form-container">
+        <h3>Edit Record</h3>
+        <form (ngSubmit)="updateRecord()">
+          <div *ngIf="editingRecord.type === 'Workout'">
+            <input [(ngModel)]="editingRecord.exercise" name="exercise" placeholder="Exercise" required />
+            <input [(ngModel)]="editingRecord.sets" name="sets" type="number" placeholder="Sets" required />
+            <input [(ngModel)]="editingRecord.reps" name="reps" type="number" placeholder="Reps" required />
+            <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
+          </div>
+          <div *ngIf="editingRecord.type === 'Cardio'">
+            <input [(ngModel)]="editingRecord.exercise" name="exercise" placeholder="Exercise" required />
+            <input [(ngModel)]="editingRecord.miles" name="miles" type="number" step="0.01" placeholder="Miles" required />
+            <input [(ngModel)]="editingRecord.time" name="time" type="text" placeholder="Time (HH:mm:ss)" required />
+          </div>
+          <div *ngIf="editingRecord.type === 'WeighIn'">
+            <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
+          </div>
           <button type="submit">Save</button>
           <button type="button" (click)="cancelEdit()">Cancel</button>
         </form>
       </div>
 
-      <h3>Your Workouts</h3>
-      <button (click)="getWorkouts()">Refresh Workouts</button>
-      <ul *ngIf="workouts.length > 0; else noWorkouts">
-        <li *ngFor="let workout of workouts">
-          {{ workout.date | date:'medium' }} - {{ workout.exercise }}: {{ workout.sets }} sets, {{ workout.reps }} reps, {{ workout.weight }} lbs
-          <button (click)="startEdit(workout)">Edit</button>
-          <button (click)="deleteWorkout(workout.id)">Delete</button>
+      <!-- Records List -->
+      <h3>Your Records</h3>
+      <button (click)="getRecords()">Refresh Records</button>
+      <ul *ngIf="records.length > 0; else noRecords">
+        <li *ngFor="let record of records">
+          <span *ngIf="record.type === 'Workout'">
+            {{ record.date | date:'medium' }} - {{ record.exercise }}: {{ record.sets }} sets, {{ record.reps }} reps, {{ record.weight | number:'1.2-2' }} lbs
+          </span>
+          <span *ngIf="record.type === 'Cardio'">
+            {{ record.date | date:'medium' }} - Cardio: {{ record.exercise }}, {{ record.miles | number:'1.2-2' }} miles, Time: {{ formatTime(record.time) }}
+          </span>
+          <span *ngIf="record.type === 'WeighIn'">
+            {{ record.date | date:'medium' }} - Weigh-In: {{ record.weight | number:'1.2-2' }} lbs
+          </span>
+          <button (click)="startEdit(record)">Edit</button>
+          <button (click)="deleteRecord(record.id)">Delete</button>
         </li>
       </ul>
-      <ng-template #noWorkouts>
-        <p>No workouts logged yet.</p>
+      <ng-template #noRecords>
+        <p>No records logged yet.</p>
       </ng-template>
-      <p>{{ message }}</p>
+      <div class="form-container">
+        <p>{{ message }}</p>
+      </div>
     </div>
   `,
   styles: [`
@@ -91,9 +136,11 @@ export class LoginComponent {
   password = '';
   message = '';
   isLoggedIn = false;
-  workouts: Workout[] = [];
-  newWorkout: Partial<Workout> = { exercise: '', sets: null, reps: null, weight: null };
-  editingWorkout: Workout | null = null;
+  records: Workout[] = [];
+  newWorkout: Partial<Workout> = { type: WorkoutType.Workout, exercise: '', sets: undefined, reps: undefined, weight: undefined };
+  newCardio: Partial<Workout> = { type: WorkoutType.Cardio, exercise: '', miles: undefined, time: undefined };
+  newWeighIn: Partial<Workout> = { type: WorkoutType.WeighIn, weight: undefined };
+  editingRecord: Workout | null = null;
 
 
   /**
@@ -104,7 +151,7 @@ export class LoginComponent {
   constructor(private authService: AuthService) { // Injects AuthService to handle authentication and API calls.
     this.isLoggedIn = this.authService.isLoggedIn();
     if (this.isLoggedIn) {
-      this.getWorkouts();
+      this.getRecords();
     }
   }
 
@@ -118,7 +165,7 @@ export class LoginComponent {
       next: () => {
         this.message = 'Login successful!';
         this.isLoggedIn = true;
-        this.getWorkouts();
+        this.getRecords();
       },
       error: (err) => this.message = 'Login failed: ' + err.message
     });
@@ -131,24 +178,23 @@ export class LoginComponent {
   logout() {
     this.authService.logout();
     this.isLoggedIn = false;
-    this.workouts = [];
+    this.records = [];
     this.message = 'Logged out.';
   }
 
   /**
-   * Fetches workouts for the logged-in user.
-   * Flow: Calls AuthService to get workouts, updates UI with the list.
+   * Fetches recent workouts, cardio, and weighins for the logged-in user.
+   * Flow: Calls AuthService to get workouts, cardio, and weighins, updates UI with the list.
    */
-  getWorkouts() {
+  getRecords() {
     this.authService.getWorkouts().subscribe({
       next: (response) => {
-        this.workouts = response;
-        this.message = 'Workouts fetched successfully.';
+        this.records = response;
+        this.message = 'Records fetched successfully.';
       },
-      error: (err) => this.message = 'Failed to get workouts: ' + err.message
+      error: (err) => this.message = 'Failed to get records: ' + err.message
     });
   }
-
 
   /**
    * Handles workout creation form submission.
@@ -156,13 +202,13 @@ export class LoginComponent {
    */
   createWorkout() {
     const workoutToCreate = {
+      type: WorkoutType.Workout,
       exercise: this.newWorkout.exercise,
-      sets: Number(this.newWorkout.sets ?? 0), // Convert null to 0 if not provided
-      reps: Number(this.newWorkout.reps ?? 0), // Convert null to 0 if not provided
-      weight: Number(this.newWorkout.weight ?? 0) // Convert null to 0 if not provided
+      sets: Number(this.newWorkout.sets ?? 0),
+      reps: Number(this.newWorkout.reps ?? 0),
+      weight: Number(this.newWorkout.weight ?? 0)
     };
 
-    // Optional: Add client-side validation to ensure required fields are filled
     if (!workoutToCreate.exercise || workoutToCreate.sets <= 0 || workoutToCreate.reps <= 0) {
       this.message = 'Please fill in all required fields with valid values.';
       return;
@@ -171,11 +217,69 @@ export class LoginComponent {
     this.authService.createWorkout(workoutToCreate).subscribe({
       next: () => {
         this.message = 'Workout added successfully!';
-        this.newWorkout = { exercise: '', sets: null, reps: null, weight: null }; // Reset to null
-        this.getWorkouts();
+        this.newWorkout = { type: WorkoutType.Workout, exercise: '', sets: undefined, reps: undefined, weight: undefined };
+        this.getRecords();
       },
       error: (err) => {
         this.message = 'Failed to add workout: ' + err.message;
+        console.error('Error details:', err);
+      }
+    });
+  }
+
+  /**
+   * Handles cardio creation form submission.
+   * Flow: Calls AuthService to create a cardio, refreshes the workout list.
+   */
+  createCardio() {
+    const cardioToCreate = {
+      type: WorkoutType.Cardio,
+      exercise: this.newCardio.exercise,
+      miles: Number(this.newCardio.miles ?? 0),
+      time: this.newCardio.time // Backend expects HH:mm:ss format
+    };
+
+    if (!cardioToCreate.exercise || cardioToCreate.miles <= 0 || !cardioToCreate.time) {
+      this.message = 'Please fill in all required fields with valid values.';
+      return;
+    }
+
+    this.authService.createWorkout(cardioToCreate).subscribe({
+      next: () => {
+        this.message = 'Cardio added successfully!';
+        this.newCardio = { type: WorkoutType.Cardio, exercise: '', miles: undefined, time: undefined };
+        this.getRecords();
+      },
+      error: (err) => {
+        this.message = 'Failed to add cardio: ' + err.message;
+        console.error('Error details:', err);
+      }
+    });
+  }
+
+  /**
+   * Handles weighin creation form submission.
+   * Flow: Calls AuthService to create a weighin, refreshes the workout list.
+   */
+  createWeighIn() {
+    const weighInToCreate = {
+      type: WorkoutType.WeighIn,
+      weight: Number(this.newWeighIn.weight ?? 0)
+    };
+
+    if (weighInToCreate.weight <= 0) {
+      this.message = 'Please fill in a valid weight.';
+      return;
+    }
+
+    this.authService.createWorkout(weighInToCreate).subscribe({
+      next: () => {
+        this.message = 'Weigh-In added successfully!';
+        this.newWeighIn = { type: WorkoutType.WeighIn, weight: undefined };
+        this.getRecords();
+      },
+      error: (err) => {
+        this.message = 'Failed to add weigh-in: ' + err.message;
         console.error('Error details:', err);
       }
     });
@@ -188,7 +292,7 @@ export class LoginComponent {
    * @param workout The workout to edit.
    */
   startEdit(workout: Workout) {
-    this.editingWorkout = { ...workout };
+    this.editingRecord = { ...workout };
   }
 
   /**
@@ -196,7 +300,7 @@ export class LoginComponent {
    * Flow: Clears the editingWorkout to hide the edit form.
    */
   cancelEdit() {
-    this.editingWorkout = null;
+    this.editingRecord = null;
     this.message = 'Edit cancelled.';
   }
 
@@ -204,45 +308,68 @@ export class LoginComponent {
    * Updates the currently edited workout.
    * Flow: Calls AuthService to update the workout, refreshes the workout list, and clears the edit form.
    */
-  updateWorkout() {
-    if (this.editingWorkout) {
-      const workoutToUpdate = {
-        id: this.editingWorkout.id,
-        userId: this.editingWorkout.userId,
-        date: this.editingWorkout.date,
-        exercise: this.editingWorkout.exercise,
-        sets: Number(this.editingWorkout.sets),
-        reps: Number(this.editingWorkout.reps),
-        weight: Number(this.editingWorkout.weight)
+  updateRecord() {
+    if (this.editingRecord && this.editingRecord.id !== undefined) {
+      const recordToUpdate: Partial<Workout> = {
+        id: this.editingRecord.id,
+        userId: this.editingRecord.userId,
+        date: this.editingRecord.date,
+        type: this.editingRecord.type
       };
 
-      this.authService.updateWorkout(this.editingWorkout.id, workoutToUpdate).subscribe({
+      if (this.editingRecord.type === WorkoutType.Workout) {
+        recordToUpdate.exercise = this.editingRecord.exercise;
+        recordToUpdate.sets = Number(this.editingRecord.sets);
+        recordToUpdate.reps = Number(this.editingRecord.reps);
+        recordToUpdate.weight = Number(this.editingRecord.weight);
+      } else if (this.editingRecord.type === WorkoutType.Cardio) {
+        recordToUpdate.exercise = this.editingRecord.exercise;
+        recordToUpdate.miles = Number(this.editingRecord.miles);
+        recordToUpdate.time = this.editingRecord.time;
+      } else if (this.editingRecord.type === WorkoutType.WeighIn) {
+        recordToUpdate.weight = Number(this.editingRecord.weight);
+      }
+
+      this.authService.updateWorkout(this.editingRecord.id, recordToUpdate).subscribe({
         next: () => {
-          this.message = 'Workout updated successfully!';
-          this.editingWorkout = null;
-          this.getWorkouts();
+          this.message = 'Record updated successfully!';
+          this.editingRecord = null;
+          this.getRecords();
         },
-        error: (err) => this.message = 'Failed to update workout: ' + err.message
+        error: (err) => this.message = 'Failed to update record: ' + err.message
       });
+    } else {
+      this.message = 'Cannot update record: ID is missing.';
     }
   }
 
   /**
-   * Deletes a workout.
-   * Flow: Calls AuthService to delete the workout and refreshes the workout list.
+   * Deletes a record.
+   * Flow: Calls AuthService to delete the record and refreshes the record list.
    * @param id The ID of the workout to delete, if available.
    */
-  deleteWorkout(id: number | undefined) {
+  deleteRecord(id: number | undefined) {
     if (id === undefined) {
-      this.message = 'Cannot delete workout: ID is missing.';
+      this.message = 'Cannot delete record: ID is missing.';
       return;
     }
     this.authService.deleteWorkout(id).subscribe({
       next: () => {
-        this.message = 'Workout deleted successfully!';
-        this.getWorkouts();
+        this.message = 'Record deleted successfully!';
+        this.getRecords();
       },
-      error: (err) => this.message = 'Failed to delete workout: ' + err.message
+      error: (err) => this.message = 'Failed to delete record: ' + err.message
     });
+  }
+
+  // Format TimeSpan string (e.g., "00:30:00") to a more readable format
+  formatTime(time: string | null | undefined): string {
+    if (!time) return '';
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    let formatted = '';
+    if (hours > 0) formatted += `${hours}h `;
+    if (minutes > 0 || hours > 0) formatted += `${minutes}m `;
+    formatted += `${seconds}s`;
+    return formatted.trim();
   }
 }
