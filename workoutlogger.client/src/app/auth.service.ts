@@ -73,4 +73,31 @@ export class AuthService {
   createWorkout(workout: any) {
     return this.http.post<any>(this.workoutsUrl, workout);
   }
+
+  /**
+   * Updates an existing workout via the backend API.
+   * Flow: Sends PUT to /api/workouts/{id}, returns updated workout.
+   * @param id The ID of the workout to update.
+   * @param workout The updated workout data.
+   * @returns An observable with the update response.
+   */
+  updateWorkout(id: number | undefined, workout: any) {
+    if (id === undefined) {
+      throw new Error('Cannot update workout: ID is missing.');
+    }
+    return this.http.put(`${this.workoutsUrl}/${id}`, workout);
+  }
+
+  /**
+   * Deletes a workout via the backend API.
+   * Flow: Sends DELETE to /api/workouts/{id}.
+   * @param id The ID of the workout to delete.
+   * @returns An observable with the delete response.
+   */
+  deleteWorkout(id: number | undefined) {
+    if (id === undefined) {
+      throw new Error('Cannot delete workout: ID is missing.');
+    }
+    return this.http.delete(`${this.workoutsUrl}/${id}`);
+  }
 }

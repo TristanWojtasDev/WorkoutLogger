@@ -46,13 +46,99 @@ namespace WorkoutLogger.Server.Controllers
         /// <param name="workout">The workout data to create.</param>
         /// <returns>The created workout with its ID.</returns>
         [HttpPost]
-        public async Task<ActionResult<Workout>> CreateWorkout(Workout workout)
+        public async Task<ActionResult<Workout>> CreateWorkout([FromBody] Workout workout)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             workout.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             workout.Date = DateTime.UtcNow;
             _context.Workouts.Add(workout);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetWorkouts), new { id = workout.Id }, workout);
+        }
+
+        /// <summary>
+        /// Updates an existing workout for the logged-in user.
+        /// </summary>
+        /// <param name="id">The ID of the workout to update.</param>
+        /// <param name="updatedWorkout">The updated workout data.</param>
+        /// <returns>No content if successful; otherwise, an error response.</returns>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateWorkout(int id, Workout updatedWorkout)
+        {
+            if (id != updatedWorkout.Id)
+            {
+                return BadRequest("Workout ID mismatch.");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var workout = await _context.Workouts.FindAsync(id);
+
+            if (workout == null)
+            {
+                return NotFound("Workout not found.");
+            }
+
+            if (workout.UserId != userId)
+            {
+                return Forbid("You can only update your own workouts.");
+            }
+
+            workout.Exercise = updatedWorkout.Exercise;
+            workout.Sets = updatedWorkout.Sets;
+            workout.Reps = updatedWorkout.Reps;
+            workout.Weight = updatedWorkout.Weight;
+            workout.Date = updatedWorkout.Date;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!WorkoutExists(id))
+                {
+                    return NotFound("Workout not found.");
+                }
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Deletes a workout for the logged-in user.
+        /// </summary>
+        /// <param name="id">The ID of the workout to delete.</param>
+        /// <returns>No content if successful; otherwise, an error response.</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteWorkout(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var workout = await _context.Workouts.FindAsync(id);
+
+            if (workout == null)
+            {
+                return NotFound("Workout not found.");
+            }
+
+            if (workout.UserId != userId)
+            {
+                return Forbid("You can only delete your own workouts.");
+            }
+
+            _context.Workouts.Remove(workout);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool WorkoutExists(int id)
+        {
+            return _context.Workouts.Any(e => e.Id == id);
         }
     }
 }
