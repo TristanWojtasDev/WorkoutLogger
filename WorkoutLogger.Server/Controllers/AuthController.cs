@@ -1,6 +1,6 @@
 /// <summary>
 /// Controller for handling authentication requests.
-/// Flow: Provides /api/auth/login endpoint to authenticate users and return JWT token.
+/// Flow: Provides /api/auth/login and /api/auth/register endpoints to authenticate or register users and return JWT token.
 /// </summary>
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -29,12 +29,11 @@ namespace WorkoutLogger.Server.Controllers
             _configuration = configuration;
         }
 
-
         /// <summary>
         /// Authenticates a user and returns a JWT token.
         /// </summary>
         /// <param name="model">The login credentials (username and password).</param>
-        /// <returns>A JWT token and expiration if successful; otherwise, Unauthorized.</returns>
+        /// <returns>A JWT token if successful; otherwise, Unauthorized.</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -47,16 +46,30 @@ namespace WorkoutLogger.Server.Controllers
             return Unauthorized();
         }
 
-        [HttpPost("register")] // Temporary for testing
-        public async Task<IActionResult> Register([FromBody] LoginModel model)
+        /// <summary>
+        /// Registers a new user and returns a JWT token.
+        /// </summary>
+        /// <param name="model">The registration credentials (username and password).</param>
+        /// <returns>A JWT token if successful; otherwise, BadRequest with validation errors.</returns>
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Password))
+            {
+                return BadRequest("Username and password are required.");
+            }
+
             var user = new IdentityUser { UserName = model.Username, Email = model.Username };
             var result = await _userManager.CreateAsync(user, model.Password);
-            if (result.Succeeded)
+
+            if (!result.Succeeded)
             {
-                return Ok("User created");
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest($"Failed to create user: {errors}");
             }
-            return BadRequest(result.Errors);
+
+            var token = GenerateJwtToken(user);
+            return Ok(new { token });
         }
 
         private string GenerateJwtToken(IdentityUser user)
@@ -91,6 +104,22 @@ namespace WorkoutLogger.Server.Controllers
     /// Model for login credentials.
     /// </summary>
     public class LoginModel
+    {
+        /// <summary>
+        /// Gets or sets the username.
+        /// </summary>
+        public string Username { get; set; }
+
+        /// <summary>
+        /// Gets or sets the password.
+        /// </summary>
+        public string Password { get; set; }
+    }
+
+    /// <summary>
+    /// Model for registration credentials.
+    /// </summary>
+    public class RegisterModel
     {
         /// <summary>
         /// Gets or sets the username.

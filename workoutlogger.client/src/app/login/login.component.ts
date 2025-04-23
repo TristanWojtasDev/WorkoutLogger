@@ -1,16 +1,15 @@
 /**
- * Main component handling login and workout management UI.
+ * Main component handling login, signup, guest login, and workout management UI.
  * Flow:
- * 1. Initially displays a login form (isLoggedIn = false).
- * 2. On login submission, calls AuthService to authenticate.
- * 3. After successful login, switches to workout section (isLoggedIn = true), fetching and displaying workouts.
+ * 1. Initially displays a login or signup form (isLoggedIn = false).
+ * 2. On login/signup/guest login submission, calls AuthService to authenticate or register.
+ * 3. After successful login/signup, switches to workout section (isLoggedIn = true), fetching and displaying workouts.
  */
-import { Component } from '@angular/core'; //Decorator from Angular to define a component
+import { Component } from '@angular/core'; // Decorator from Angular to define a component
 import { AuthService } from '../auth.service'; // Service for authentication and workout API calls
 import { Workout, WorkoutType } from '../workout'; // Interface for workout data structure
 import { FormsModule } from '@angular/forms'; // Provides ngModel for two-way data binding in forms (used for login and workout creation forms)
 import { CommonModule } from '@angular/common'; // Provides common Angular directives like *ngIf, *ngFor, and pipes like date
-
 
 @Component({
   selector: 'app-login', // Defines the HTML tag <app-login> to use this component (used in app.component.ts)
@@ -19,12 +18,21 @@ import { CommonModule } from '@angular/common'; // Provides common Angular direc
   template: `
     <div *ngIf="!isLoggedIn">
       <div class="form-container">
-        <h2>Login</h2>
-        <form (ngSubmit)="onSubmit()">
+        <h2>{{ showSignup ? 'Sign Up' : 'Login' }}</h2>
+        <!-- Login Form -->
+        <form *ngIf="!showSignup" (ngSubmit)="onSubmit()">
           <input [(ngModel)]="username" name="username" placeholder="Username" required />
           <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
           <button type="submit">Login</button>
         </form>
+        <!-- Signup Form -->
+        <form *ngIf="showSignup" (ngSubmit)="onRegister()">
+          <input [(ngModel)]="username" name="username" placeholder="Username" required />
+          <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
+          <button type="submit">Sign Up</button>
+        </form>
+        <button (click)="loginAsGuest()">Login as Guest</button>
+        <button (click)="toggleSignup()">{{ showSignup ? 'Switch to Login' : 'Switch to Sign Up' }}</button>
       </div>
       <div class="form-container">
         <p>{{ message }}</p>
@@ -37,7 +45,7 @@ import { CommonModule } from '@angular/common'; // Provides common Angular direc
 
       <!-- Create Workout Form -->
       <div class="form-container">
-        <h3>Create Workout</h3>
+        <h3>Add Workout</h3>
         <form (ngSubmit)="createWorkout()">
           <input [(ngModel)]="newWorkout.exercise" name="exercise" placeholder="Exercise" required />
           <input [(ngModel)]="newWorkout.sets" name="sets" type="number" placeholder="Sets" required />
@@ -136,12 +144,12 @@ export class LoginComponent {
   password = '';
   message = '';
   isLoggedIn = false;
+  showSignup = false; // Toggle between login and signup forms
   records: Workout[] = [];
   newWorkout: Partial<Workout> = { type: WorkoutType.Workout, exercise: '', sets: undefined, reps: undefined, weight: undefined };
   newCardio: Partial<Workout> = { type: WorkoutType.Cardio, exercise: '', miles: undefined, time: undefined };
   newWeighIn: Partial<Workout> = { type: WorkoutType.WeighIn, weight: undefined };
   editingRecord: Workout | null = null;
-
 
   /**
    * Initializes the component, checking the login state.
@@ -159,7 +167,6 @@ export class LoginComponent {
    * Handles login form submission.
    * Flow: Calls AuthService to authenticate, updates isLoggedIn, and fetches workouts.
    */
-
   onSubmit() {
     this.authService.login(this.username, this.password).subscribe({
       next: () => {
@@ -169,6 +176,65 @@ export class LoginComponent {
       },
       error: (err) => this.message = 'Login failed: ' + err.message
     });
+  }
+
+  /**
+   * Handles signup form submission.
+   * Flow: Calls AuthService to register, updates isLoggedIn, and fetches workouts.
+   */
+  onRegister() {
+    this.authService.register(this.username, this.password).subscribe({
+      next: (response) => {
+        localStorage.setItem('token', response.token);
+        this.message = 'Registration successful! Logged in.';
+        this.isLoggedIn = true;
+        this.getRecords();
+      },
+      error: (err) => this.message = 'Registration failed: ' + err.error
+    });
+  }
+
+  /**
+   * Handles guest login form submission.
+   * Flow: Calls AuthService to authenticate, updates isLoggedIn, and fetches workouts.
+   */
+  loginAsGuest() {
+    let guestId = localStorage.getItem('guestId');
+    if (!guestId) {
+      guestId = this.generateGuid();
+      localStorage.setItem('guestId', guestId);
+    }
+
+    this.authService.guestLogin(guestId).subscribe({
+      next: (response) => {
+        localStorage.setItem('token', response.token);
+        this.isLoggedIn = true;
+        this.message = 'Logged in as guest!';
+        this.getRecords();
+      },
+      error: (err) => this.message = 'Guest login failed: ' + err.message
+    });
+  }
+
+  /**
+   * Generate guest login guid
+   */
+  generateGuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Toggles between login and signup forms.
+   * Flow: Switches the form display and resets input fields.
+   */
+  toggleSignup() {
+    this.showSignup = !this.showSignup;
+    this.username = '';
+    this.password = '';
+    this.message = '';
   }
 
   /**
@@ -285,7 +351,6 @@ export class LoginComponent {
     });
   }
 
-
   /**
    * Initiates editing of a workout.
    * Flow: Copies the selected workout into editingWorkout to populate the edit form.
@@ -362,7 +427,9 @@ export class LoginComponent {
     });
   }
 
-  // Format TimeSpan string (e.g., "00:30:00") to a more readable format
+  /**
+   * Format TimeSpan string (e.g., "00:30:00") to a more readable format
+   */
   formatTime(time: string | null | undefined): string {
     if (!time) return '';
     const [hours, minutes, seconds] = time.split(':').map(Number);

@@ -11,32 +11,44 @@ A full-stack web application for logging and managing workout activities, built 
 ## What Has Been Done
 - **Authentication/Authorization**:
   - Implemented JWT-based authentication using ASP.NET Core Identity.
-  - `AuthController` handles `POST /api/auth/login`, returning a JWT token.
-  - Angular frontend (`LoginComponent`) allows users to log in with username/password.
-  - Protected endpoints (e.g., `/api/test`, `/api/workouts`) require authentication.
+  - `AuthController` handles:
+    - `POST /api/auth/login`: Authenticates users and returns a JWT token.
+    - `POST /api/auth/register`: Creates new user accounts and returns a JWT token.
+  - `GuestAuthController` handles `POST /api/guest-auth/login`: Allows guest users to log in with a generated GUID, creating a guest account if needed.
+  - Angular frontend (`LoginComponent`) supports:
+    - Login with username/password.
+    - Account creation via a signup form.
+    - Guest login with automatic GUID generation.
+    - Toggle between login and signup forms.
+  - Protected endpoints (e.g., `/api/workouts`) require authentication.
 - **ORM**:
-  - Set up Entity Framework Core with SQLite for user management.
-  - Added `Workout` model and migrations for workout logging.
+  - Set up Entity Framework Core with SQLite for user and workout management.
+  - Added `Workout` model with support for Workout, Cardio, and Weigh-In types, including migrations.
 - **Frontend Integration**:
   - Angular app integrated with .NET backend via SPA proxy (`Microsoft.AspNetCore.SpaProxy`).
-  - Login form works at `https://localhost:7090/` (backend port).
+  - Login, signup, and guest login forms work at `https://localhost:7090/` (backend port).
   - `apiUrl` in `auth.service.ts` hardcoded to `https://localhost:7090/api/auth` due to proxy routing issues.
 - **Workout Logging**:
   - Added `WorkoutsController` for CRUD operations:
-    - `GET /api/workouts`: Fetches workouts for the logged-in user.
-    - `POST /api/workouts`: Creates a new workout.
-    - `PUT /api/workouts/{id}`: Updates an existing workout (added to support editing).
-    - `DELETE /api/workouts/{id}`: Deletes a workout (added to support deletion).
-  - Updated `Workout` model to make `UserId` nullable to fix validation issues during creation.
+    - `GET /api/workouts`: Fetches workouts (Workout, Cardio, Weigh-In) for the logged-in or guest user.
+    - `POST /api/workouts`: Creates a new Workout, Cardio, or Weigh-In entry.
+    - `PUT /api/workouts/{id}`: Updates an existing workout entry.
+    - `DELETE /api/workouts/{id}`: Deletes a workout entry.
+  - Updated `Workout` model to:
+    - Support `WorkoutType` enum (`Workout`, `Cardio`, `WeighIn`).
+    - Make `UserId` nullable to fix validation issues during creation.
   - Updated `LoginComponent` to:
-    - Fetch and display workouts after login.
-    - Include a form to create workouts (`POST /api/workouts`).
-    - Display the workout list with details (exercise, sets, reps, weight, date).
-    - Add edit and delete functionality for workouts (`PUT /api/workouts/{id}`, `DELETE /api/workouts/{id}`).
-    - Center the "Create Workout", "Edit Workout", and login forms using Flexbox (`form-container` class).
-    - Fix form placeholders for `sets`, `reps`, and `weight` to show placeholder text (`Sets`, `Reps`, `Weight (lbs)`) instead of `0` by initializing with `undefined`.
+    - Fetch and display all workout types (Workout, Cardio, Weigh-In) after login.
+    - Include forms to create Workout (`exercise`, `sets`, `reps`, `weight`), Cardio (`exercise`, `miles`, `time`), and Weigh-In (`weight`) entries.
+    - Display workout list with details:
+      - Workout: exercise, sets, reps, weight, date.
+      - Cardio: exercise, miles, time (formatted as `h m s`), date.
+      - Weigh-In: weight, date.
+    - Support edit and delete functionality for all workout types.
+    - Center forms (login, signup, create/edit Workout, Cardio, Weigh-In) using Flexbox (`form-container` class).
+    - Fix form placeholders to show `Sets`, `Reps`, `Weight (lbs)`, `Miles`, `Time (HH:mm:ss)` instead of `0` by initializing with `undefined`.
 - **Documentation**:
-  - Added JSDoc comments to `LoginComponent` and `AuthService` for better code documentation.
+  - Added JSDoc comments to `LoginComponent` and `AuthService` for login, signup, guest login, and workout management.
   - Configured TypeDoc to generate documentation for the frontend (`workoutlogger.client`).
   - Updated `tsconfig.json` to include `src/**/*.ts` and exclude `node_modules` and test files for TypeDoc.
   - Generated documentation in `workoutlogger.client/docs` with `npm run docs`.
@@ -55,9 +67,9 @@ A full-stack web application for logging and managing workout activities, built 
 
 ### Setup
 1. **Clone the Repository**:
-- bash
-git clone <repository-url>
-cd WorkoutLogger
+   ```bash
+   git clone <repository-url>
+   cd WorkoutLogger
 
 2. **Backend Setup:**:
 - Open `WorkoutLogger.Server` in Visual Studio.
