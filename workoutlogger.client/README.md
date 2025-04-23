@@ -57,3 +57,18 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+# Main Pieces and Flow of the Application
+
+## Flow Overview
+
+### Angular Client Boots Up
+The app starts, loads `AppModule`, and renders `AppComponent`, which displays `LoginComponent`.
+
+### Displaying the Login Form
+`LoginComponent` renders a login form. On submit, it calls `AuthService` to authenticate via the backend API.
+
+### Displaying the Exercise Form
+After successful login, `LoginComponent` updates its UI to show the workout creation form and a list of workouts, fetched via `AuthService`.
+
