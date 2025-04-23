@@ -12,6 +12,7 @@ import { jwtDecode } from 'jwt-decode';
 })
 export class AuthService {
   private apiUrl = 'https://localhost:7090/api/auth'; // Hardcoded for now
+  private guestApiUrl = 'https://localhost:7090/api/guest-auth'; // Hardcoded for now
   private workoutsUrl = 'https://localhost:7090/api/workouts'; // Hardcoded for now
 
 
@@ -34,6 +35,39 @@ export class AuthService {
         localStorage.setItem('token', response.token);
         const decoded = jwtDecode<any>(response.token);
         console.log('Logged in user:', decoded.sub);
+      })
+    );
+  }
+
+  /**
+   * Registers a new user via the backend API.
+   * Flow: Sends POST to /api/auth/register, stores JWT token, logs user info.
+   * @param username The user's username.
+   * @param password The user's password.
+   * @returns An observable with the registration response (JWT token).
+   */
+  register(username: string, password: string) {
+    return this.http.post<any>(`${this.apiUrl}/register`, { username, password }).pipe(
+      tap(response => {
+        localStorage.setItem('token', response.token);
+        const decoded = jwtDecode<any>(response.token);
+        console.log('Logged in user:', decoded.sub);
+      })
+    );
+  }
+
+  /**
+ * Authenticates a guest user via the backend API.
+ * Flow: Sends POST to /api/guestauth/login, stores JWT token, logs guest user info.
+ * @param guestId The unique identifier for the guest user.
+ * @returns An observable with the guest login response (JWT token).
+ */
+  guestLogin(guestId: string) {
+    return this.http.post<any>(`${this.guestApiUrl}/login`, { guestId }).pipe(
+      tap(response => {
+        localStorage.setItem('token', response.token);
+        const decoded = jwtDecode<any>(response.token);
+        console.log('Logged in guest user:', decoded.sub);
       })
     );
   }
