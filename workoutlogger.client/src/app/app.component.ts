@@ -1,3 +1,7 @@
+/**
+ * Root component of the Angular app, serving as the entry point for the UI.
+ * Flow: Renders LoginComponent via the <app-login> tag to display the login form.
+ */
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 

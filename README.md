@@ -22,8 +22,27 @@ A full-stack web application for logging and managing workout activities, built 
   - Login form works at `https://localhost:7090/` (backend port).
   - `apiUrl` in `auth.service.ts` hardcoded to `https://localhost:7090/api/auth` due to proxy routing issues.
 - **Workout Logging**:
-  - Added `WorkoutsController` for basic CRUD (`GET /api/workouts`, `POST /api/workouts`).
-  - Updated `LoginComponent` to fetch workouts after login.
+  - Added `WorkoutsController` for CRUD operations:
+    - `GET /api/workouts`: Fetches workouts for the logged-in user.
+    - `POST /api/workouts`: Creates a new workout.
+    - `PUT /api/workouts/{id}`: Updates an existing workout (added to support editing).
+    - `DELETE /api/workouts/{id}`: Deletes a workout (added to support deletion).
+  - Updated `Workout` model to make `UserId` nullable to fix validation issues during creation.
+  - Updated `LoginComponent` to:
+    - Fetch and display workouts after login.
+    - Include a form to create workouts (`POST /api/workouts`).
+    - Display the workout list with details (exercise, sets, reps, weight, date).
+    - Add edit and delete functionality for workouts (`PUT /api/workouts/{id}`, `DELETE /api/workouts/{id}`).
+    - Center the "Create Workout", "Edit Workout", and login forms using Flexbox (`form-container` class).
+    - Fix form placeholders for `sets`, `reps`, and `weight` to show placeholder text (`Sets`, `Reps`, `Weight (lbs)`) instead of `0` by initializing with `undefined`.
+- **Documentation**:
+  - Added JSDoc comments to `LoginComponent` and `AuthService` for better code documentation.
+  - Configured TypeDoc to generate documentation for the frontend (`workoutlogger.client`).
+  - Updated `tsconfig.json` to include `src/**/*.ts` and exclude `node_modules` and test files for TypeDoc.
+  - Generated documentation in `workoutlogger.client/docs` with `npm run docs`.
+- **Type Safety**:
+  - Fixed TypeScript errors in `LoginComponent` related to `null` vs. `undefined` for form fields.
+  - Updated `deleteWorkout` and `updateWorkout` methods to handle `number | undefined` for `id` parameters, ensuring type safety.
 - **Deployment Prep**:
   - Created a `Dockerfile` for containerizing the app.
 
@@ -69,10 +88,6 @@ npm install
     - Add manual proxy middleware for `/api/*` in `Program.cs`.
     - Ensure `proxy.conf.json` is applied correctly.
 
-- **Enhance Workout Features**:
-  - Add a form to create workouts (`POST /api/workouts`).
-  - Display the workout list with details (exercise, sets, reps, weight, date).
-
 - **Deployment**:
   - Build Angular for production and integrate into `WorkoutLogger.Server/wwwroot`:
     ```powershell
@@ -104,4 +119,4 @@ npm install
 ## Notes
 - The SPA proxy issue requires further debugging to avoid CORS and hardcoding. A manual proxy middleware for `/api/*` was suggested but not fully tested.
 - Expand the workout feature based on user needs (e.g., edit/delete workouts, filtering).
-
+
