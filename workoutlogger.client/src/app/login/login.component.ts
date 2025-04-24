@@ -11,134 +11,691 @@ import { Workout, WorkoutType } from '../workout'; // Interface for workout data
 import { FormsModule } from '@angular/forms'; // Provides ngModel for two-way data binding in forms (used for login and workout creation forms)
 import { CommonModule } from '@angular/common'; // Provides common Angular directives like *ngIf, *ngFor, and pipes like date
 
+
 @Component({
-  selector: 'app-login', // Defines the HTML tag <app-login> to use this component (used in app.component.ts)
-  standalone: true, // Marks the component as standalone (no NgModule required)
-  imports: [FormsModule, CommonModule], // Directly imports dependencies for the component
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
   template: `
-    <div *ngIf="!isLoggedIn">
-      <div class="form-container">
-        <h2>{{ showSignup ? 'Sign Up' : 'Login' }}</h2>
-        <!-- Login Form -->
-        <form *ngIf="!showSignup" (ngSubmit)="onSubmit()">
-          <input [(ngModel)]="username" name="username" placeholder="Username" required />
-          <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
-          <button type="submit">Login</button>
-        </form>
-        <!-- Signup Form -->
-        <form *ngIf="showSignup" (ngSubmit)="onRegister()">
-          <input [(ngModel)]="username" name="username" placeholder="Username" required />
-          <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required />
-          <button type="submit">Sign Up</button>
-        </form>
-        <button (click)="loginAsGuest()">Login as Guest</button>
-        <button (click)="toggleSignup()">{{ showSignup ? 'Switch to Login' : 'Switch to Sign Up' }}</button>
-      </div>
-      <div class="form-container">
-        <p>{{ message }}</p>
-      </div>
-    </div>
-
-    <div *ngIf="isLoggedIn">
-      <h2>Workout Logger</h2>
-      <button (click)="logout()">Logout</button>
-
-      <!-- Create Workout Form -->
-      <div class="form-container">
-        <h3>Add Workout</h3>
-        <form (ngSubmit)="createWorkout()">
-          <input [(ngModel)]="newWorkout.exercise" name="exercise" placeholder="Exercise" required />
-          <input [(ngModel)]="newWorkout.sets" name="sets" type="number" placeholder="Sets" required />
-          <input [(ngModel)]="newWorkout.reps" name="reps" type="number" placeholder="Reps" required />
-          <input [(ngModel)]="newWorkout.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
-          <button type="submit">Add Workout</button>
-        </form>
-      </div>
-
-      <!-- Create Cardio Form -->
-      <div class="form-container">
-        <h3>Add Cardio</h3>
-        <form (ngSubmit)="createCardio()">
-          <input [(ngModel)]="newCardio.exercise" name="exercise" placeholder="Exercise" required />
-          <input [(ngModel)]="newCardio.miles" name="miles" type="number" step="0.01" placeholder="Miles" required />
-          <input [(ngModel)]="newCardio.time" name="time" type="text" placeholder="Time (HH:mm:ss)" required />
-          <button type="submit">Add Cardio</button>
-        </form>
-      </div>
-
-      <!-- Create Weigh-In Form -->
-      <div class="form-container">
-        <h3>Add Weigh-In</h3>
-        <form (ngSubmit)="createWeighIn()">
-          <input [(ngModel)]="newWeighIn.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
-          <button type="submit">Add Weigh-In</button>
-        </form>
-      </div>
-
-      <!-- Edit Form -->
-      <div *ngIf="editingRecord" class="form-container">
-        <h3>Edit Record</h3>
-        <form (ngSubmit)="updateRecord()">
-          <div *ngIf="editingRecord.type === 'Workout'">
-            <input [(ngModel)]="editingRecord.exercise" name="exercise" placeholder="Exercise" required />
-            <input [(ngModel)]="editingRecord.sets" name="sets" type="number" placeholder="Sets" required />
-            <input [(ngModel)]="editingRecord.reps" name="reps" type="number" placeholder="Reps" required />
-            <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
+    <div class="retro-container">
+      <div class="retro-screen">
+        <div class="screen-header">
+          <div class="pixel-corner top-left"></div>
+          <h1 class="game-title">WORKOUT QUEST</h1>
+          <div class="pixel-corner top-right"></div>
+        </div>
+        
+        <!-- Login/Signup Section -->
+        <div *ngIf="!isLoggedIn" class="game-section">
+          <div class="pixel-content">
+            <h2 class="section-title">{{ showSignup ? 'CREATE CHARACTER' : 'LOAD CHARACTER' }}</h2>
+            <!-- Login Form -->
+            <form *ngIf="!showSignup" (ngSubmit)="onSubmit()" class="retro-form">
+              <div class="form-group">
+                <label>USERNAME:</label>
+                <input [(ngModel)]="username" name="username" required class="retro-input" />
+              </div>
+              <div class="form-group">
+                <label>PASSWORD:</label>
+                <input [(ngModel)]="password" name="password" type="password" required class="retro-input" />
+              </div>
+              <button type="submit" class="retro-btn primary-btn">CONTINUE</button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form *ngIf="showSignup" (ngSubmit)="onRegister()" class="retro-form">
+              <div class="form-group">
+                <label>NEW USERNAME:</label>
+                <input [(ngModel)]="username" name="username" required class="retro-input" />
+              </div>
+              <div class="form-group">
+                <label>NEW PASSWORD:</label>
+                <input [(ngModel)]="password" name="password" type="password" required class="retro-input" />
+              </div>
+              <button type="submit" class="retro-btn primary-btn">CREATE</button>
+            </form>
+            
+            <div class="button-group">
+              <button (click)="loginAsGuest()" class="retro-btn secondary-btn">GUEST MODE</button>
+              <button (click)="toggleSignup()" class="retro-btn secondary-btn">
+                {{ showSignup ? 'LOAD GAME' : 'NEW GAME' }}
+              </button>
+            </div>
+            
+            <div *ngIf="message" class="message-box">
+              <p>{{ message }}</p>
+            </div>
           </div>
-          <div *ngIf="editingRecord.type === 'Cardio'">
-            <input [(ngModel)]="editingRecord.exercise" name="exercise" placeholder="Exercise" required />
-            <input [(ngModel)]="editingRecord.miles" name="miles" type="number" step="0.01" placeholder="Miles" required />
-            <input [(ngModel)]="editingRecord.time" name="time" type="text" placeholder="Time (HH:mm:ss)" required />
+        </div>
+        
+        <!-- Workout Logger Section -->
+        <div *ngIf="isLoggedIn" class="game-section">
+          <div class="menu-bar">
+            <h2 class="section-title">TRAINING MODE</h2>
+            <button (click)="logout()" class="retro-btn danger-btn">QUIT GAME</button>
           </div>
-          <div *ngIf="editingRecord.type === 'WeighIn'">
-            <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.01" placeholder="Weight (lbs)" required />
+          
+          <div class="game-content">
+            <div class="pixel-tabs">
+              <button (click)="activeTab = 'workout'" [class.active]="activeTab === 'workout'" class="tab-btn">STRENGTH</button>
+              <button (click)="activeTab = 'cardio'" [class.active]="activeTab === 'cardio'" class="tab-btn">CARDIO</button>
+              <button (click)="activeTab = 'weighin'" [class.active]="activeTab === 'weighin'" class="tab-btn">STATS</button>
+              <button (click)="activeTab = 'records'; getRecords()" [class.active]="activeTab === 'records'" class="tab-btn">HISTORY</button>
+            </div>
+            
+            <!-- Create Workout Form -->
+            <div *ngIf="activeTab === 'workout'" class="tab-content">
+              <h3 class="pixel-title">NEW STRENGTH TRAINING</h3>
+              <form (ngSubmit)="createWorkout()" class="retro-form">
+                <div class="form-group">
+                  <label>EXERCISE:</label>
+                  <input [(ngModel)]="newWorkout.exercise" name="exercise" required class="retro-input" />
+                </div>
+                <div class="form-group">
+                  <label>SETS:</label>
+                  <input [(ngModel)]="newWorkout.sets" name="sets" type="number" required class="retro-input numeric" />
+                </div>
+                <div class="form-group">
+                  <label>REPS:</label>
+                  <input [(ngModel)]="newWorkout.reps" name="reps" type="number" required class="retro-input numeric" />
+                </div>
+                <div class="form-group">
+                  <label>WEIGHT:</label>
+                  <input [(ngModel)]="newWorkout.weight" name="weight" type="number" step="0.1" required class="retro-input numeric" />
+                  <span class="unit">LBS</span>
+                </div>
+                <button type="submit" class="retro-btn primary-btn">SAVE PROGRESS</button>
+              </form>
+            </div>
+            
+            <!-- Create Cardio Form -->
+            <div *ngIf="activeTab === 'cardio'" class="tab-content">
+              <h3 class="pixel-title">NEW CARDIO QUEST</h3>
+              <form (ngSubmit)="createCardio()" class="retro-form">
+                <div class="form-group">
+                  <label>ACTIVITY:</label>
+                  <input [(ngModel)]="newCardio.exercise" name="exercise" required class="retro-input" />
+                </div>
+                <div class="form-group">
+                  <label>MILES:</label>
+                  <input [(ngModel)]="newCardio.miles" name="miles" type="number" step="0.01" required class="retro-input numeric" />
+                </div>
+                <div class="form-group">
+                  <label>TIME:</label>
+                  <input [(ngModel)]="newCardio.time" name="time" type="text" placeholder="HH:MM:SS" required class="retro-input" />
+                </div>
+                <button type="submit" class="retro-btn primary-btn">COMPLETE QUEST</button>
+              </form>
+            </div>
+            
+            <!-- Create Weigh-In Form -->
+            <div *ngIf="activeTab === 'weighin'" class="tab-content">
+              <h3 class="pixel-title">CHARACTER STATS</h3>
+              <form (ngSubmit)="createWeighIn()" class="retro-form">
+                <div class="form-group">
+                  <label>WEIGHT:</label>
+                  <input [(ngModel)]="newWeighIn.weight" name="weight" type="number" step="0.1" required class="retro-input numeric" />
+                  <span class="unit">LBS</span>
+                </div>
+                <button type="submit" class="retro-btn primary-btn">UPDATE STATS</button>
+              </form>
+            </div>
+            
+            <!-- Records List -->
+            <div *ngIf="activeTab === 'records'" class="tab-content">
+              <h3 class="pixel-title">ADVENTURE LOG</h3>
+              <button (click)="getRecords()" class="retro-btn secondary-btn refresh-btn">REFRESH</button>
+              
+              <div *ngIf="editingRecord" class="edit-form">
+                <h4 class="pixel-subtitle">EDIT RECORD</h4>
+                <form (ngSubmit)="updateRecord()" class="retro-form">
+                  <div *ngIf="editingRecord.type === 'Workout'">
+                    <div class="form-group">
+                      <label>EXERCISE:</label>
+                      <input [(ngModel)]="editingRecord.exercise" name="exercise" required class="retro-input" />
+                    </div>
+                    <div class="form-group">
+                      <label>SETS:</label>
+                      <input [(ngModel)]="editingRecord.sets" name="sets" type="number" required class="retro-input numeric" />
+                    </div>
+                    <div class="form-group">
+                      <label>REPS:</label>
+                      <input [(ngModel)]="editingRecord.reps" name="reps" type="number" required class="retro-input numeric" />
+                    </div>
+                    <div class="form-group">
+                      <label>WEIGHT:</label>
+                      <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.1" required class="retro-input numeric" />
+                      <span class="unit">LBS</span>
+                    </div>
+                  </div>
+                  <div *ngIf="editingRecord.type === 'Cardio'">
+                    <div class="form-group">
+                      <label>ACTIVITY:</label>
+                      <input [(ngModel)]="editingRecord.exercise" name="exercise" required class="retro-input" />
+                    </div>
+                    <div class="form-group">
+                      <label>MILES:</label>
+                      <input [(ngModel)]="editingRecord.miles" name="miles" type="number" step="0.01" required class="retro-input numeric" />
+                    </div>
+                    <div class="form-group">
+                      <label>TIME:</label>
+                      <input [(ngModel)]="editingRecord.time" name="time" type="text" required class="retro-input" />
+                    </div>
+                  </div>
+                  <div *ngIf="editingRecord.type === 'WeighIn'">
+                    <div class="form-group">
+                      <label>WEIGHT:</label>
+                      <input [(ngModel)]="editingRecord.weight" name="weight" type="number" step="0.1" required class="retro-input numeric" />
+                      <span class="unit">LBS</span>
+                    </div>
+                  </div>
+                  <div class="button-group">
+                    <button type="submit" class="retro-btn primary-btn">SAVE</button>
+                    <button type="button" (click)="cancelEdit()" class="retro-btn danger-btn">CANCEL</button>
+                  </div>
+                </form>
+              </div>
+              
+              <div class="records-list">
+                <div *ngIf="records.length > 0; else noRecords" class="retro-list">
+                  <div *ngFor="let record of records" class="record-item">
+                    <div class="record-content">
+                      <span *ngIf="record.type === 'Workout'" class="record-text">
+                        <span class="record-date">{{ record.date | date:'MM/dd/yy HH:mm' }}</span>
+                        <span class="record-type strength-type">STRENGTH</span>
+                        {{ record.exercise }}: {{ record.sets }} sets × {{ record.reps }} reps × {{ record.weight | number:'1.1-1' }} lbs
+                      </span>
+                      <span *ngIf="record.type === 'Cardio'" class="record-text">
+                        <span class="record-date">{{ record.date | date:'MM/dd/yy HH:mm' }}</span>
+                        <span class="record-type cardio-type">CARDIO</span>
+                        {{ record.exercise }}: {{ record.miles | number:'1.2-2' }} miles, {{ formatTime(record.time) }}
+                      </span>
+                      <span *ngIf="record.type === 'WeighIn'" class="record-text">
+                        <span class="record-date">{{ record.date | date:'MM/dd/yy HH:mm' }}</span>
+                        <span class="record-type stats-type">STATS</span>
+                        Weight: {{ record.weight | number:'1.1-1' }} lbs
+                      </span>
+                    </div>
+                    <div class="record-actions">
+                      <button (click)="startEdit(record)" class="action-btn edit-btn">EDIT</button>
+                      <button (click)="deleteRecord(record.id)" class="action-btn delete-btn">DELETE</button>
+                    </div>
+                  </div>
+                </div>
+                <ng-template #noRecords>
+                  <div class="empty-state">
+                    <p>NO ADVENTURES LOGGED YET.</p>
+                    <p>BEGIN YOUR QUEST!</p>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+            
+            <div *ngIf="message" class="message-box">
+              <p>{{ message }}</p>
+            </div>
           </div>
-          <button type="submit">Save</button>
-          <button type="button" (click)="cancelEdit()">Cancel</button>
-        </form>
-      </div>
-
-      <!-- Records List -->
-      <h3>Your Records</h3>
-      <button (click)="getRecords()">Refresh Records</button>
-      <ul *ngIf="records.length > 0; else noRecords">
-        <li *ngFor="let record of records">
-          <span *ngIf="record.type === 'Workout'">
-            {{ record.date | date:'medium' }} - {{ record.exercise }}: {{ record.sets }} sets, {{ record.reps }} reps, {{ record.weight | number:'1.2-2' }} lbs
-          </span>
-          <span *ngIf="record.type === 'Cardio'">
-            {{ record.date | date:'medium' }} - Cardio: {{ record.exercise }}, {{ record.miles | number:'1.2-2' }} miles, Time: {{ formatTime(record.time) }}
-          </span>
-          <span *ngIf="record.type === 'WeighIn'">
-            {{ record.date | date:'medium' }} - Weigh-In: {{ record.weight | number:'1.2-2' }} lbs
-          </span>
-          <button (click)="startEdit(record)">Edit</button>
-          <button (click)="deleteRecord(record.id)">Delete</button>
-        </li>
-      </ul>
-      <ng-template #noRecords>
-        <p>No records logged yet.</p>
-      </ng-template>
-      <div class="form-container">
-        <p>{{ message }}</p>
+        </div>
+        
+        <div class="screen-footer">
+          <div class="pixel-corner bottom-left"></div>
+          <p class="copyright">2025 WORKOUT QUEST</p>
+          <div class="pixel-corner bottom-right"></div>
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    div { margin: 20px; }
-    h2, h3 { color: #333; }
-    form { display: flex; flex-direction: column; gap: 10px; max-width: 300px; }
-    .form-container {
+    /* Global Pixel Font */
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    
+    /* Main Container */
+    .retro-container {
+      font-family: 'Press Start 2P', cursive;
+      background-color: #111;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+      letter-spacing: 1px;
+      line-height: 1.5;
+    }
+    
+    /* Screen Effects */
+    .retro-screen {
+      background-color: #000;
+      border: 8px solid #444;
+      border-radius: 10px;
+      padding: 15px;
+      width: 100%;
+      max-width: 800px;
+      min-height: 600px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3),
+                  inset 0 0 15px rgba(0, 255, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Screen Scan Lines Effect */
+    .retro-screen::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        transparent 0px,
+        rgba(0, 255, 0, 0.03) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    /* Header */
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid #00ff00;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      position: relative;
+    }
+    
+    /* Footer */
+    .screen-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 4px solid #00ff00;
+      margin-top: 15px;
+      padding-top: 10px;
+      position: relative;
+    }
+    
+    /* Pixel Corners */
+    .pixel-corner {
+      width: 15px;
+      height: 15px;
+      background-color: #00ff00;
+    }
+    
+    .top-left {
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+    
+    .top-right {
+      clip-path: polygon(0 0, 100% 0, 100% 100%);
+    }
+    
+    .bottom-left {
+      clip-path: polygon(0 0, 100% 100%, 0 100%);
+    }
+    
+    .bottom-right {
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+    
+    /* Game Title */
+    .game-title {
+      font-size: 24px;
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+      margin: 0;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    
+    .copyright {
+      font-size: 8px;
+      color: #00aa00;
+      margin: 0;
+    }
+    
+    /* Sections */
+    .game-section {
+      padding: 10px;
+    }
+    
+    .pixel-content {
+      border: 4px solid #00aa00;
+      background: rgba(0, 20, 0, 0.7);
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      color: #ffff00;
+      margin-top: 0;
+      margin-bottom: 15px;
+      text-align: center;
+      text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
+    }
+    
+    /* Form Elements */
+    .retro-form {
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 12px;
+      display: flex;
       align-items: center;
     }
-    input { padding: 5px; }
-    button { padding: 5px 10px; cursor: pointer; margin-right: 5px; }
-    ul { list-style: none; padding: 0; }
-    li { padding: 5px 0; }
+    
+    label {
+      color: #00ff00;
+      margin-right: 10px;
+      min-width: 120px;
+      font-size: 12px;
+    }
+    
+    .retro-input {
+      background-color: #000;
+      border: 2px solid #00aa00;
+      color: #00ff00;
+      padding: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      width: 100%;
+    }
+    
+    .retro-input:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+    
+    .retro-input.numeric {
+      width: 80px;
+      text-align: right;
+    }
+    
+    .unit {
+      margin-left: 5px;
+      color: #00aa00;
+      font-size: 10px;
+    }
+    
+    /* Buttons */
+    .retro-btn {
+      background-color: #222;
+      border: 3px solid #00aa00;
+      color: #00ff00;
+      font-family: 'Press Start 2P', cursive;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      position: relative;
+      transition: all 0.1s;
+    }
+    
+    .retro-btn:hover {
+      background-color: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 0 #00aa00;
+    }
+    
+    .retro-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+      background-color: #444;
+    }
+    
+    .primary-btn {
+      background-color: #003300;
+      border-color: #00aa00;
+    }
+    
+    .secondary-btn {
+      background-color: #002244;
+      border-color: #0088ff;
+      color: #00aaff;
+    }
+    
+    .danger-btn {
+      background-color: #330000;
+      border-color: #aa0000;
+      color: #ff0000;
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    
+    /* Message Box */
+    .message-box {
+      border: 2px dashed #ffff00;
+      background-color: rgba(40, 40, 0, 0.5);
+      padding: 10px;
+      margin-top: 15px;
+      color: #ffff00;
+      font-size: 10px;
+      text-align: center;
+    }
+    
+    /* Tabs */
+    .pixel-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #00aa00;
+    }
+    
+    .tab-btn {
+      background-color: #000;
+      border: 2px solid #00aa00;
+      border-bottom: none;
+      color: #00aa00;
+      padding: 5px 10px;
+      margin-right: 5px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      position: relative;
+      top: 2px;
+    }
+    
+    .tab-btn.active {
+      background-color: #003300;
+      color: #00ff00;
+      border-bottom: 2px solid #003300;
+    }
+    
+    .tab-content {
+      background: rgba(0, 20, 0, 0.7);
+      border: 2px solid #00aa00;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    /* Titles */
+    .pixel-title {
+      color: #00ff00;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 15px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+    
+    .pixel-subtitle {
+      color: #00aaff;
+      font-size: 12px;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    
+    /* Records List */
+    .records-list {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 5px;
+      margin-top: 15px;
+    }
+    
+    .records-list::-webkit-scrollbar {
+      width: 8px;
+      background-color: #111;
+    }
+    
+    .records-list::-webkit-scrollbar-thumb {
+      background-color: #00aa00;
+      border-radius: 4px;
+    }
+    
+    .record-item {
+      border: 2px solid #00aa00;
+      margin-bottom: 8px;
+      background-color: rgba(0, 10, 0, 0.5);
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+    }
+    
+    .record-content {
+      flex: 1;
+    }
+    
+    .record-text {
+      font-size: 10px;
+      color: #eee;
+      display: block;
+    }
+    
+    .record-date {
+      color: #aaa;
+      font-size: 8px;
+      display: block;
+      margin-bottom: 3px;
+    }
+    
+    .record-type {
+      display: inline-block;
+      padding: 2px 5px;
+      margin-right: 5px;
+      font-size: 8px;
+      border-radius: 3px;
+    }
+    
+    .strength-type {
+      background-color: #003300;
+      color: #00ff00;
+    }
+    
+    .cardio-type {
+      background-color: #002244;
+      color: #00aaff;
+    }
+    
+    .stats-type {
+      background-color: #332200;
+      color: #ffaa00;
+    }
+    
+    .record-actions {
+      display: flex;
+      flex-direction: column;
+      margin-left: 5px;
+    }
+    
+    .action-btn {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      padding: 3px 5px;
+      margin: 2px;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .edit-btn {
+      background-color: #002244;
+      color: #00aaff;
+    }
+    
+    .delete-btn {
+      background-color: #330000;
+      color: #ff0000;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 12px;
+    }
+    
+    /* Menu Bar */
+    .menu-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    /* Animation for the flicker effect */
+    @keyframes flicker {
+      0% { opacity: 0.97; }
+      5% { opacity: 0.99; }
+      10% { opacity: 0.95; }
+      15% { opacity: 1; }
+      20% { opacity: 0.98; }
+      50% { opacity: 0.94; }
+      60% { opacity: 0.98; }
+      70% { opacity: 0.97; }
+      80% { opacity: 0.99; }
+      100% { opacity: 0.95; }
+    }
+    
+    .retro-screen {
+      animation: flicker 4s infinite linear;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      label {
+        margin-bottom: 5px;
+      }
+      
+      .retro-input {
+        width: 100%;
+      }
+      
+      .retro-input.numeric {
+        width: 100%;
+      }
+      
+      .record-item {
+        flex-direction: column;
+      }
+      
+      .record-actions {
+        flex-direction: row;
+        margin-top: 10px;
+        margin-left: 0;
+      }
+    }
   `]
 })
+
 export class LoginComponent {
   username = '';
   password = '';
@@ -146,6 +703,7 @@ export class LoginComponent {
   isLoggedIn = false;
   showSignup = false; // Toggle between login and signup forms
   records: Workout[] = [];
+  activeTab = 'workout';
   newWorkout: Partial<Workout> = { type: WorkoutType.Workout, exercise: '', sets: undefined, reps: undefined, weight: undefined };
   newCardio: Partial<Workout> = { type: WorkoutType.Cardio, exercise: '', miles: undefined, time: undefined };
   newWeighIn: Partial<Workout> = { type: WorkoutType.WeighIn, weight: undefined };
@@ -358,6 +916,7 @@ export class LoginComponent {
    */
   startEdit(workout: Workout) {
     this.editingRecord = { ...workout };
+    this.activeTab = 'records';
   }
 
   /**
@@ -427,8 +986,11 @@ export class LoginComponent {
     });
   }
 
+
+
   /**
    * Format TimeSpan string (e.g., "00:30:00") to a more readable format
+   * @param time The workout time to formate
    */
   formatTime(time: string | null | undefined): string {
     if (!time) return '';
